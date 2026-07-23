@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ContactStatus {
+  FOUND
+  DRAFTED
+  SENT
+  BOUNCED
+  REPLIED
+  SKIPPED
+}
+
+enum CampaignStatus {
+  DRAFT
+  PENDING_CONFIRMATION
+  SENDING
+  SENT
+  FAILED
+}
+
+/// Uma sessão de conversa com o assistente (histórico para dar contexto aos comandos seguintes)
+model ConversationMessage {
+  id        String   @id @default(cuid())
+  role      String // "user" | "assistant"
+  content   String
+  createdAt DateTime @default(now())
+}
+
+/// Uma pesquisa pedida ao assistente (ex: "empresas de marketing em Lisboa")
+model SearchSession {
+  id        String    @id @default(cuid())
+  query     String
+  createdAt DateTime  @default(now())
+  companies Company[]
+}
+
+model Company {
+  id              String        @id @default(cuid())
+  name            String
+  website         String?
+  phone           String?
+  email           String?
+  address         String?
+  source          String? // provider de onde veio (ex: "google_places")
+  sourcePlaceId   String?
+  searchSessionId String
+  searchSession   SearchSession @relation(fields: [searchSessionId], references: [id], onDelete: Cascade)
+  status          ContactStatus @default(FOUND)
+  createdAt       DateTime      @default(now())
+
+  campaignRecipients EmailCampaignRecipient[]
+
+  @@index([searchSessionId])
+}
+
+/// Um envio de email em lote, sempre limitado e sujeito a confirmação antes de sair
+model EmailCampaign {
+  id            String         @id @default(cuid())
+  subject       String
+  bodyTemplate  String
+  status        CampaignStatus @default(DRAFT)
+  maxRecipients Int            @default(15)
+  createdAt     DateTime       @default(now())
+  confirmedAt   DateTime?
+  sentAt        DateTime?
+
+  recipients EmailCampaignRecipient[]
+}
+
+model EmailCampaignRecipient {
+  id         String        @id @default(cuid())
+  campaignId String
+  campaign   EmailCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  companyId  String
+  company    Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  email      String
+  status     ContactStatus @default(DRAFTED)
+  sentAt     DateTime?
+  error      String?
+
+  @@unique([campaignId, companyId])
+  @@index([campaignId])
+}
