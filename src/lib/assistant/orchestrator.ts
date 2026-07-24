@@ -32,7 +32,10 @@ async function loadHistory(): Promise<Anthropic.MessageParam[]> {
 async function executeSkill(name: string, input: Record<string, unknown>): Promise<unknown> {
   switch (name) {
     case "search_companies":
-      return runSearchCompaniesSkill({ query: String(input.query ?? "") });
+      return runSearchCompaniesSkill({
+        query: String(input.query ?? ""),
+        limit: typeof input.limit === "number" ? input.limit : undefined,
+      });
     case "draft_email_campaign":
       return runDraftEmailCampaignSkill({
         instructions: String(input.instructions ?? ""),

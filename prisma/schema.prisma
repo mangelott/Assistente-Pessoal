@@ -44,18 +44,20 @@ model SearchSession {
 }
 
 model Company {
-  id              String        @id @default(cuid())
-  name            String
-  website         String?
-  phone           String?
-  email           String?
-  address         String?
-  source          String? // provider de onde veio (ex: "google_places")
-  sourcePlaceId   String?
-  searchSessionId String
-  searchSession   SearchSession @relation(fields: [searchSessionId], references: [id], onDelete: Cascade)
-  status          ContactStatus @default(FOUND)
-  createdAt       DateTime      @default(now())
+  id               String        @id @default(cuid())
+  name             String
+  website          String?
+  phone            String?
+  email            String?
+  address          String?
+  rating           Float?
+  userRatingsTotal Int?
+  source           String? // provider de onde veio (ex: "google_places")
+  sourcePlaceId    String?
+  searchSessionId  String
+  searchSession    SearchSession @relation(fields: [searchSessionId], references: [id], onDelete: Cascade)
+  status           ContactStatus @default(FOUND)
+  createdAt        DateTime      @default(now())
 
   campaignRecipients EmailCampaignRecipient[]
 

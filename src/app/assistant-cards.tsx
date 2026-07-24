@@ -1,6 +1,13 @@
 "use client";
 
-type CompanyResult = { name: string; phone: string | null; email: string | null; website: string | null };
+type CompanyResult = {
+  name: string;
+  phone: string | null;
+  email: string | null;
+  website: string | null;
+  rating?: number | null;
+  userRatingsTotal?: number | null;
+};
 
 export function CompanyResultsCard(props: {
   totalFound: number;
@@ -21,7 +28,15 @@ export function CompanyResultsCard(props: {
       <ul className="divide-y divide-gray-100">
         {props.companies.map((c, i) => (
           <li key={i} className="py-1.5">
-            <p className="font-medium">{c.name}</p>
+            <p className="font-medium">
+              {c.name}
+              {c.rating != null && (
+                <span className="ml-2 font-normal text-amber-600">
+                  ★ {c.rating.toFixed(1)}
+                  {c.userRatingsTotal != null ? ` (${c.userRatingsTotal})` : ""}
+                </span>
+              )}
+            </p>
             <p className="text-gray-500">
               {c.email ?? "sem email"} {c.phone ? `· ${c.phone}` : ""}
             </p>

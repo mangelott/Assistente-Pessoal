@@ -4,8 +4,12 @@ export const ASSISTANT_TOOLS: Anthropic.Tool[] = [
   {
     name: "search_companies",
     description:
-      "Pesquisa empresas na web (ex: por setor e localização) e recolhe nome, telefone, email e website. " +
-      "Usa esta ferramenta sempre que o utilizador pedir para procurar, encontrar ou pesquisar empresas.",
+      "Pesquisa empresas na web (ex: por setor e localização) e recolhe nome, telefone, email, website e avaliação " +
+      "(rating). Os resultados vêm sempre ordenados da melhor para a pior avaliação. " +
+      "Usa esta ferramenta sempre que o utilizador pedir para procurar, encontrar ou pesquisar empresas. " +
+      "Se o utilizador mencionar uma região vaga do país (ex: 'zona centro', 'norte'), tenta traduzi-la em 2-3 " +
+      "cidades concretas dessa região na própria query (ex: 'Coimbra, Viseu e Leiria' em vez de 'zona centro'), " +
+      "porque o motor de pesquisa funciona muito melhor com localizações concretas do que com regiões amplas.",
     input_schema: {
       type: "object",
       properties: {
@@ -13,6 +17,11 @@ export const ASSISTANT_TOOLS: Anthropic.Tool[] = [
           type: "string",
           description:
             "A pesquisa em linguagem natural a enviar ao motor de pesquisa de empresas, ex: 'empresas de marketing em Lisboa'.",
+        },
+        limit: {
+          type: "number",
+          description:
+            "Quantos resultados o utilizador quer (ex: se pedir 'as 15 melhores', usa 15). Por omissão 20, máximo 45.",
         },
       },
       required: ["query"],

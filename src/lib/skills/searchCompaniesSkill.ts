@@ -3,10 +3,11 @@ import { searchCompanies } from "@/lib/providers/companySearch";
 
 export type SearchCompaniesInput = {
   query: string;
+  limit?: number;
 };
 
-export async function runSearchCompaniesSkill({ query }: SearchCompaniesInput) {
-  const { results, usedMockData } = await searchCompanies(query);
+export async function runSearchCompaniesSkill({ query, limit }: SearchCompaniesInput) {
+  const { results, usedMockData } = await searchCompanies(query, limit);
 
   const searchSession = await prisma.searchSession.create({
     data: {
@@ -18,6 +19,8 @@ export async function runSearchCompaniesSkill({ query }: SearchCompaniesInput) {
           phone: r.phone,
           email: r.email,
           address: r.address,
+          rating: r.rating,
+          userRatingsTotal: r.userRatingsTotal,
           source: r.source,
           sourcePlaceId: r.sourcePlaceId,
         })),
@@ -39,6 +42,8 @@ export async function runSearchCompaniesSkill({ query }: SearchCompaniesInput) {
       phone: c.phone,
       email: c.email,
       website: c.website,
+      rating: c.rating,
+      userRatingsTotal: c.userRatingsTotal,
     })),
   };
 }
