@@ -3,7 +3,9 @@
 Assistente pessoal por voz (PWA) para automatizar duas tarefas:
 
 1. **Pesquisar empresas** (ex: "procura empresas de marketing em Lisboa") e recolher nome, telefone, email e website.
-2. **Redigir e enviar emails em lote** às empresas encontradas (ex: "escreve um email a apresentar os meus serviços e envia"), sempre com um passo de confirmação antes do envio e um limite máximo de 15 destinatários por campanha.
+2. **Redigir emails em lote** às empresas encontradas (ex: "escreve um email a apresentar os meus serviços"), com duas formas de os despachar — sempre com um limite máximo de 15 destinatários por campanha:
+   - **Envio automático** via Resend, só depois de confirmares explicitamente.
+   - **Rascunhos na tua conta Gmail**, para reveres e enviares manualmente — nunca sai nada sozinho.
 
 Funciona como PWA — instalável no telemóvel (Android/iOS) ou no computador, com comandos por voz (Web Speech API) para usar em mãos-livres, por exemplo a conduzir.
 
@@ -13,7 +15,8 @@ Funciona como PWA — instalável no telemóvel (Android/iOS) ou no computador, 
 - **PostgreSQL** + **Prisma 7** (driver adapter `@prisma/adapter-pg`)
 - **Claude (Anthropic API)** — interpreta os comandos de voz/texto e decide qual ação executar (tool use), e redige os emails
 - **Google Places API** — pesquisa de empresas (opcional; sem chave configurada, usa dados de exemplo)
-- **Resend** — envio de email transacional
+- **Resend** — envio automático de email transacional
+- **Gmail API** (OAuth) — alternativa ao Resend: cria rascunhos na conta Gmail do utilizador para revisão manual
 - Autenticação simples de utilizador único (JWT em cookie httpOnly), pensada para uso pessoal
 
 ## Arquitetura
@@ -31,7 +34,8 @@ Skills atuais:
 
 - `search_companies` — pesquisa empresas e grava-as numa `SearchSession` (`src/lib/skills/searchCompaniesSkill.ts`)
 - `draft_email_campaign` — redige assunto+corpo do email e cria uma `EmailCampaign` pendente de confirmação, limitada a 15 destinatários com email disponível e ainda não contactados (`src/lib/skills/draftEmailCampaignSkill.ts`)
-- `confirm_send_campaign` — envia definitivamente uma campanha pendente, só depois de confirmação explícita do utilizador, por voz ou pelo botão na interface (`src/lib/skills/confirmSendCampaignSkill.ts`)
+- `confirm_send_campaign` — envia definitivamente uma campanha pendente via Resend, só depois de confirmação explícita do utilizador, por voz ou pelo botão na interface (`src/lib/skills/confirmSendCampaignSkill.ts`)
+- `create_gmail_drafts` — cria um rascunho por destinatário na conta Gmail ligada, sem enviar nada, para revisão manual (`src/lib/skills/createGmailDraftsSkill.ts`)
 
 Novas skills podem ser adicionadas registando-as em `src/lib/assistant/tools.ts` e `src/lib/assistant/orchestrator.ts`.
 
@@ -57,8 +61,9 @@ Novas skills podem ser adicionadas registando-as em `src/lib/assistant/tools.ts`
    | `ADMIN_PASSWORD_HASH` | sim | Hash bcrypt da password (ver abaixo) |
    | `ANTHROPIC_API_KEY` | sim | Chave da API da Anthropic (Claude) |
    | `GOOGLE_PLACES_API_KEY` | não | Sem esta chave, a pesquisa de empresas devolve dados de exemplo |
-   | `RESEND_API_KEY`, `EMAIL_FROM` | sim, para enviar emails | Conta Resend com domínio verificado |
-   | `EMAIL_REPLY_TO`, `SENDER_NAME`, `SENDER_ADDRESS` | não | Usados no rodapé de identificação/opt-out dos emails |
+   | `RESEND_API_KEY`, `EMAIL_FROM` | não, só para envio automático | Conta Resend com domínio verificado |
+   | `EMAIL_REPLY_TO`, `SENDER_NAME`, `SENDER_ADDRESS` | não | Usados no rodapé de identificação/opt-out dos emails enviados via Resend |
+   | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URI` | não, só para rascunhos no Gmail | Credenciais OAuth do Google Cloud Console (ver abaixo) |
 
 3. Gerar o hash da password de login:
 
@@ -82,9 +87,22 @@ Novas skills podem ser adicionadas registando-as em `src/lib/assistant/tools.ts`
 
    Abre `http://localhost:3000`, entra com o email/password configurados, e instala a PWA a partir do menu do navegador ("Adicionar ao ecrã principal" / "Instalar aplicação").
 
+### Ligar o Gmail (para rascunhos, opcional)
+
+Só é preciso se quiseres a opção de rascunhos no Gmail (além ou em vez do envio automático via Resend):
+
+1. No [Google Cloud Console](https://console.cloud.google.com), no mesmo projeto onde ativaste a Places API (ou noutro):
+   - **APIs e Serviços → Biblioteca** → pesquisa e ativa a **"Gmail API"**.
+   - **APIs e Serviços → Ecrã de consentimento OAuth** → tipo "Externo" → preenche o nome da app e o teu email → em "Scopes" adiciona `https://www.googleapis.com/auth/gmail.compose` → em "Utilizadores de teste" adiciona o teu próprio email (enquanto a app estiver em modo de testes, só estes emails conseguem autorizar).
+   - **APIs e Serviços → Credenciais → Criar Credenciais → ID de cliente OAuth** → tipo "Aplicação Web" → em "URIs de redirecionamento autorizados" adiciona exatamente o valor de `GOOGLE_OAUTH_REDIRECT_URI` (ex: `http://localhost:3000/api/auth/google/callback`).
+   - Copia o **Client ID** e o **Client Secret** para o `.env`.
+2. Reinicia o `npm run dev`, entra na app, e clica em **"Ligar Gmail"** no topo da página — vais ser redirecionado para autorizares o acesso.
+
+Este acesso está limitado ao scope `gmail.compose` (só permite criar/gerir rascunhos e enviar o que a app compuser — não lê o resto da tua caixa de entrada).
+
 ## Notas importantes
 
-- **Nunca envia sem confirmação.** Cada campanha de email fica pendente até seres tu, por voz ("sim, envia") ou pelo botão "Confirmar e enviar", a autorizar o envio.
+- **Nunca envia nem cria rascunhos sem instrução explícita.** Cada campanha de email fica pendente até dizeres claramente se queres envio automático já ("sim, envia") ou rascunhos no Gmail para reveres depois — o assistente pergunta se não estiver claro. Os botões "Confirmar e enviar já" / "Guardar rascunhos no Gmail" na interface fazem o mesmo, sem precisar de voz.
 - **Limite de 15 destinatários por campanha**, e empresas já contactadas com sucesso não voltam a ser incluídas automaticamente numa campanha seguinte.
 - **Cumprimento legal (RGPD):** todos os emails incluem um rodapé a identificar o remetente e a explicar como pedir para não voltar a ser contactado. Configura `SENDER_NAME`/`SENDER_ADDRESS` antes de enviar campanhas reais.
 - Sem `GOOGLE_PLACES_API_KEY`, as pesquisas devolvem empresas de exemplo (claramente identificadas na interface) para poderes testar o fluxo todo sem custos.

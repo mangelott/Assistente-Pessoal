@@ -6,6 +6,7 @@ import {
   CampaignPreviewCard,
   CompanyResultsCard,
   ErrorCard,
+  GmailDraftsResultCard,
   SendResultCard,
 } from "./assistant-cards";
 
@@ -38,13 +39,35 @@ export default function Home() {
   const [listening, setListening] = useState(false);
   const [busy, setBusy] = useState(false);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [draftingGmailId, setDraftingGmailId] = useState<string | null>(null);
   const [textInput, setTextInput] = useState("");
+  const [googleAccount, setGoogleAccount] = useState<{ connected: boolean; email: string | null } | null>(null);
   const speechSupported = useSpeechSupported();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    fetch("/api/auth/google/status")
+      .then((res) => res.json())
+      .then(setGoogleAccount)
+      .catch(() => setGoogleAccount({ connected: false, email: null }));
+
+    const params = new URLSearchParams(window.location.search);
+    const googleResult = params.get("google");
+    if (googleResult) {
+      window.history.replaceState({}, "", window.location.pathname);
+      const text =
+        googleResult === "connected"
+          ? "Conta Gmail ligada com sucesso."
+          : "Não consegui ligar a conta Gmail. Tenta outra vez.";
+      queueMicrotask(() => {
+        setMessages((prev) => [...prev, { id: uid(), role: "assistant", text }]);
+      });
+    }
+  }, []);
 
   async function sendCommand(text: string) {
     if (!text.trim() || busy) return;
@@ -107,6 +130,28 @@ export default function Home() {
     }
   }
 
+  async function handleGmailDraft(campaignId: string) {
+    setDraftingGmailId(campaignId);
+    try {
+      const res = await fetch(`/api/campaigns/${campaignId}/gmail-drafts`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        const reply = data.error ?? "Não foi possível criar os rascunhos no Gmail.";
+        setMessages((prev) => [...prev, { id: uid(), role: "assistant", text: reply }]);
+        speak(reply);
+        return;
+      }
+      const reply = `Criei ${data.draftedCount} de ${data.totalRecipients} rascunhos no Gmail.`;
+      setMessages((prev) => [
+        ...prev,
+        { id: uid(), role: "assistant", text: reply, toolName: "create_gmail_drafts", data },
+      ]);
+      speak(reply);
+    } finally {
+      setDraftingGmailId(null);
+    }
+  }
+
   function handleTextSubmit(e: React.FormEvent) {
     e.preventDefault();
     const text = textInput;
@@ -116,6 +161,18 @@ export default function Home() {
 
   return (
     <div className="flex flex-1 flex-col items-center px-4 py-6">
+      {googleAccount && (
+        <div className="mb-3 w-full max-w-lg rounded-md border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600 flex items-center justify-between">
+          {googleAccount.connected ? (
+            <span>Gmail ligado: {googleAccount.email}</span>
+          ) : (
+            <span>Nenhuma conta Gmail ligada — os rascunhos no Gmail não vão funcionar.</span>
+          )}
+          <a href="/api/auth/google/connect" className="ml-2 shrink-0 font-medium text-gray-900 underline">
+            {googleAccount.connected ? "Ligar outra conta" : "Ligar Gmail"}
+          </a>
+        </div>
+      )}
       <div
         ref={scrollRef}
         className="w-full max-w-lg flex-1 space-y-3 overflow-y-auto pb-4"
@@ -149,7 +206,9 @@ export default function Home() {
                 recipientCount={Number(m.data.recipientCount ?? 0)}
                 recipients={(m.data.recipients as never[]) ?? []}
                 onConfirm={handleConfirm}
+                onGmailDraft={handleGmailDraft}
                 confirming={confirmingId === m.data.campaignId}
+                draftingInGmail={draftingGmailId === m.data.campaignId}
               />
             )}
 
@@ -158,6 +217,15 @@ export default function Home() {
                 sentCount={Number(m.data.sentCount ?? 0)}
                 failedCount={Number(m.data.failedCount ?? 0)}
                 totalRecipients={Number(m.data.totalRecipients ?? 0)}
+              />
+            )}
+
+            {m.toolName === "create_gmail_drafts" && m.data && !m.data.error && (
+              <GmailDraftsResultCard
+                draftedCount={Number(m.data.draftedCount ?? 0)}
+                failedCount={Number(m.data.failedCount ?? 0)}
+                totalRecipients={Number(m.data.totalRecipients ?? 0)}
+                gmailAccount={m.data.gmailAccount ? String(m.data.gmailAccount) : undefined}
               />
             )}
 

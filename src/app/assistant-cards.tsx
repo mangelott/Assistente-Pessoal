@@ -54,7 +54,9 @@ export function CampaignPreviewCard(props: {
   recipientCount: number;
   recipients: { company: string; email: string }[];
   onConfirm: (campaignId: string) => void;
+  onGmailDraft: (campaignId: string) => void;
   confirming: boolean;
+  draftingInGmail: boolean;
 }) {
   return (
     <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm">
@@ -70,13 +72,22 @@ export function CampaignPreviewCard(props: {
           </li>
         ))}
       </ul>
-      <button
-        onClick={() => props.onConfirm(props.campaignId)}
-        disabled={props.confirming}
-        className="rounded-md bg-gray-900 px-3 py-1.5 text-white disabled:opacity-50"
-      >
-        {props.confirming ? "A enviar..." : "Confirmar e enviar"}
-      </button>
+      <div className="flex flex-wrap gap-2">
+        <button
+          onClick={() => props.onConfirm(props.campaignId)}
+          disabled={props.confirming || props.draftingInGmail}
+          className="rounded-md bg-gray-900 px-3 py-1.5 text-white disabled:opacity-50"
+        >
+          {props.confirming ? "A enviar..." : "Confirmar e enviar já"}
+        </button>
+        <button
+          onClick={() => props.onGmailDraft(props.campaignId)}
+          disabled={props.confirming || props.draftingInGmail}
+          className="rounded-md border border-gray-400 bg-white px-3 py-1.5 text-gray-800 disabled:opacity-50"
+        >
+          {props.draftingInGmail ? "A preparar..." : "Guardar rascunhos no Gmail"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -88,6 +99,24 @@ export function SendResultCard(props: { sentCount: number; failedCount: number; 
         Enviados {props.sentCount} de {props.totalRecipients} emails
         {props.failedCount > 0 ? ` (${props.failedCount} falharam)` : ""}.
       </p>
+    </div>
+  );
+}
+
+export function GmailDraftsResultCard(props: {
+  draftedCount: number;
+  failedCount: number;
+  totalRecipients: number;
+  gmailAccount?: string;
+}) {
+  return (
+    <div className="mt-2 rounded-lg border border-blue-300 bg-blue-50 p-3 text-sm">
+      <p className="font-medium">
+        {props.draftedCount} de {props.totalRecipients} rascunhos criados no Gmail
+        {props.gmailAccount ? ` (${props.gmailAccount})` : ""}
+        {props.failedCount > 0 ? ` — ${props.failedCount} falharam` : ""}.
+      </p>
+      <p className="mt-1 text-xs text-gray-600">Revê e envia manualmente a partir do Gmail quando quiseres.</p>
     </div>
   );
 }

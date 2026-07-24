@@ -13,6 +13,7 @@ datasource db {
 enum ContactStatus {
   FOUND
   DRAFTED
+  GMAIL_DRAFTED
   SENT
   BOUNCED
   REPLIED
@@ -24,7 +25,21 @@ enum CampaignStatus {
   PENDING_CONFIRMATION
   SENDING
   SENT
+  DRAFTING_IN_GMAIL
+  DRAFTED_IN_GMAIL
   FAILED
+}
+
+/// Tokens OAuth da conta Gmail ligada, usados para criar rascunhos. Aplicação de utilizador único: uma só linha.
+model GoogleAccount {
+  id           String   @id @default(cuid())
+  email        String
+  accessToken  String
+  refreshToken String
+  expiryDate   DateTime
+  scope        String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 /// Uma sessão de conversa com o assistente (histórico para dar contexto aos comandos seguintes)

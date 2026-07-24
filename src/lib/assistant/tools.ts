@@ -52,14 +52,35 @@ export const ASSISTANT_TOOLS: Anthropic.Tool[] = [
   {
     name: "confirm_send_campaign",
     description:
-      "Confirma e envia definitivamente uma campanha de email que já foi redigida e está pendente de confirmação. " +
-      "Só usa esta ferramenta quando o utilizador confirmar explicitamente que quer enviar (ex: 'sim, envia', 'confirmo', 'pode enviar').",
+      "Confirma e ENVIA AUTOMATICAMENTE E DE IMEDIATO (via Resend) uma campanha de email já redigida e pendente. " +
+      "Ninguém revê os emails depois disto — saem mesmo. " +
+      "Só usa esta ferramenta quando o utilizador pedir explicitamente envio automático/imediato (ex: 'envia agora', " +
+      "'confirmo, pode enviar', 'dispara os emails'). Se o utilizador não deixar claro se quer envio automático ou " +
+      "rascunhos no Gmail para rever primeiro, pergunta-lhe antes de agir.",
     input_schema: {
       type: "object",
       properties: {
         campaignId: {
           type: "string",
           description: "ID da campanha a confirmar. Se omitido, usa a campanha pendente mais recente.",
+        },
+      },
+    },
+  },
+  {
+    name: "create_gmail_drafts",
+    description:
+      "Prepara um rascunho por destinatário na conta Gmail ligada do utilizador, para uma campanha já redigida " +
+      "e pendente. NÃO envia nada — os rascunhos ficam no Gmail à espera que o utilizador os reveja e envie " +
+      "manualmente. Usa esta ferramenta quando o utilizador pedir para 'guardar como rascunho', 'preparar no Gmail', " +
+      "'quero rever antes no Gmail', ou disser que não quer envio automático. Se não houver conta Gmail ligada, " +
+      "a ferramenta devolve um erro a explicar isso — informa o utilizador para ligar a conta na aplicação.",
+    input_schema: {
+      type: "object",
+      properties: {
+        campaignId: {
+          type: "string",
+          description: "ID da campanha. Se omitido, usa a campanha pendente mais recente.",
         },
       },
     },
