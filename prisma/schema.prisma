@@ -14,20 +14,13 @@ enum ContactStatus {
   FOUND
   DRAFTED
   GMAIL_DRAFTED
-  SENT
-  BOUNCED
-  REPLIED
-  SKIPPED
 }
 
 enum CampaignStatus {
   DRAFT
   PENDING_CONFIRMATION
-  SENDING
-  SENT
   DRAFTING_IN_GMAIL
   DRAFTED_IN_GMAIL
-  FAILED
 }
 
 /// Tokens OAuth da conta Gmail ligada, usados para criar rascunhos. Aplicação de utilizador único: uma só linha.
@@ -79,7 +72,7 @@ model Company {
   @@index([searchSessionId])
 }
 
-/// Um envio de email em lote, sempre limitado e sujeito a confirmação antes de sair
+/// Uma campanha de email em lote, sempre limitada e sujeita a confirmação antes de gerar rascunhos no Gmail
 model EmailCampaign {
   id            String         @id @default(cuid())
   subject       String
@@ -88,7 +81,6 @@ model EmailCampaign {
   maxRecipients Int            @default(15)
   createdAt     DateTime       @default(now())
   confirmedAt   DateTime?
-  sentAt        DateTime?
 
   recipients EmailCampaignRecipient[]
 }
@@ -101,7 +93,6 @@ model EmailCampaignRecipient {
   company    Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
   email      String
   status     ContactStatus @default(DRAFTED)
-  sentAt     DateTime?
   error      String?
 
   @@unique([campaignId, companyId])

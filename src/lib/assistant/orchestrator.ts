@@ -4,20 +4,16 @@ import { prisma } from "@/lib/prisma";
 import { ASSISTANT_TOOLS } from "./tools";
 import { runSearchCompaniesSkill } from "@/lib/skills/searchCompaniesSkill";
 import { runDraftEmailCampaignSkill } from "@/lib/skills/draftEmailCampaignSkill";
-import { runConfirmSendCampaignSkill } from "@/lib/skills/confirmSendCampaignSkill";
 import { runCreateGmailDraftsSkill } from "@/lib/skills/createGmailDraftsSkill";
 
 const SYSTEM_PROMPT = `
 És um assistente pessoal por voz, em português de Portugal, que ajuda o utilizador a automatizar duas tarefas:
 1. Pesquisar empresas (ex: por setor/localização) e recolher contactos.
-2. Redigir emails em lote às empresas encontradas, e depois ou enviá-los automaticamente (Resend) ou preparar
-   rascunhos na conta Gmail do utilizador para revisão manual — nunca sem confirmação explícita.
+2. Redigir emails em lote às empresas encontradas, e preparar rascunhos na conta Gmail do utilizador para
+   revisão e envio manual — a aplicação nunca envia nada automaticamente.
 
 Regras importantes:
-- Nunca uses "confirm_send_campaign" (envio automático e imediato) nem "create_gmail_drafts" sem uma instrução
-  explícita e inequívoca do utilizador nesta conversa sobre qual dos dois quer.
-- Se o utilizador disser só "envia" sem especificar, pergunta se quer envio automático já, ou preparar rascunhos
-  no Gmail para rever primeiro — são coisas muito diferentes (uma é irreversível, a outra não).
+- Nunca uses "create_gmail_drafts" sem uma instrução explícita do utilizador nesta conversa para despachar os emails.
 - O utilizador está frequentemente a conduzir. Sê breve, claro e natural nas respostas, como se estivesses a falar.
 - Se faltar informação para executar uma ação (ex: não sabes que tipo de empresa procurar), pergunta antes de agir.
 `.trim();
@@ -45,10 +41,6 @@ async function executeSkill(name: string, input: Record<string, unknown>): Promi
       return runDraftEmailCampaignSkill({
         instructions: String(input.instructions ?? ""),
         searchSessionId: input.searchSessionId ? String(input.searchSessionId) : undefined,
-      });
-    case "confirm_send_campaign":
-      return runConfirmSendCampaignSkill({
-        campaignId: input.campaignId ? String(input.campaignId) : undefined,
       });
     case "create_gmail_drafts":
       return runCreateGmailDraftsSkill({

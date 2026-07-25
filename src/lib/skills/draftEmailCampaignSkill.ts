@@ -51,7 +51,7 @@ export async function runDraftEmailCampaignSkill({
   const alreadyContactedEmails = new Set(
     (
       await prisma.emailCampaignRecipient.findMany({
-        where: { status: "SENT", email: { in: companies.map((c) => c.email!) } },
+        where: { status: "GMAIL_DRAFTED", email: { in: companies.map((c) => c.email!) } },
         select: { email: true },
       })
     ).map((r) => r.email),

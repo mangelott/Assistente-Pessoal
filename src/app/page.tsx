@@ -2,13 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { isSpeechRecognitionSupported, listenOnce, speak } from "@/lib/speech";
-import {
-  CampaignPreviewCard,
-  CompanyResultsCard,
-  ErrorCard,
-  GmailDraftsResultCard,
-  SendResultCard,
-} from "./assistant-cards";
+import { CampaignPreviewCard, CompanyResultsCard, ErrorCard, GmailDraftsResultCard } from "./assistant-cards";
 
 type ChatMessage = {
   id: string;
@@ -38,7 +32,6 @@ export default function Home() {
   ]);
   const [listening, setListening] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [draftingGmailId, setDraftingGmailId] = useState<string | null>(null);
   const [textInput, setTextInput] = useState("");
   const [googleAccount, setGoogleAccount] = useState<{ connected: boolean; email: string | null } | null>(null);
@@ -105,28 +98,6 @@ export default function Home() {
       if (transcript) await sendCommand(transcript);
     } catch {
       setListening(false);
-    }
-  }
-
-  async function handleConfirm(campaignId: string) {
-    setConfirmingId(campaignId);
-    try {
-      const res = await fetch(`/api/campaigns/${campaignId}/confirm`, { method: "POST" });
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        const reply = data.error ?? "Não foi possível enviar a campanha.";
-        setMessages((prev) => [...prev, { id: uid(), role: "assistant", text: reply }]);
-        speak(reply);
-        return;
-      }
-      const reply = `Enviei ${data.sentCount} de ${data.totalRecipients} emails.`;
-      setMessages((prev) => [
-        ...prev,
-        { id: uid(), role: "assistant", text: reply, toolName: "confirm_send_campaign", data },
-      ]);
-      speak(reply);
-    } finally {
-      setConfirmingId(null);
     }
   }
 
@@ -205,18 +176,8 @@ export default function Home() {
                 bodyPreview={String(m.data.bodyPreview)}
                 recipientCount={Number(m.data.recipientCount ?? 0)}
                 recipients={(m.data.recipients as never[]) ?? []}
-                onConfirm={handleConfirm}
                 onGmailDraft={handleGmailDraft}
-                confirming={confirmingId === m.data.campaignId}
                 draftingInGmail={draftingGmailId === m.data.campaignId}
-              />
-            )}
-
-            {m.toolName === "confirm_send_campaign" && m.data && !m.data.error && (
-              <SendResultCard
-                sentCount={Number(m.data.sentCount ?? 0)}
-                failedCount={Number(m.data.failedCount ?? 0)}
-                totalRecipients={Number(m.data.totalRecipients ?? 0)}
               />
             )}
 
