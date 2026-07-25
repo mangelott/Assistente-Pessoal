@@ -1,7 +1,10 @@
 import { google } from "googleapis";
 import { prisma } from "@/lib/prisma";
 
-export const GMAIL_SCOPES = ["https://www.googleapis.com/auth/gmail.compose"];
+export const GMAIL_SCOPES = [
+  "https://www.googleapis.com/auth/gmail.compose",
+  "https://www.googleapis.com/auth/userinfo.email",
+];
 
 function getOAuthClient() {
   const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
