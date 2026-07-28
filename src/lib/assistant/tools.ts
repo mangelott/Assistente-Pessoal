@@ -67,4 +67,34 @@ export const ASSISTANT_TOOLS: Anthropic.Tool[] = [
       },
     },
   },
+  {
+    name: "search_gmail",
+    description:
+      "Pesquisa emails na conta Gmail ligada do utilizador (só leitura — nunca abre, apaga nem altera nada). " +
+      "Usa esta ferramenta quando o utilizador pedir para encontrar/procurar um email sobre um tópico, de uma " +
+      "pessoa, com um ficheiro anexado, etc. Traduz o pedido para a sintaxe de pesquisa do Gmail no campo 'query':\n" +
+      "- Palavras-chave simples pesquisam o assunto e corpo do email.\n" +
+      "- 'from:nome ou email' — de quem enviou.\n" +
+      "- 'to:nome ou email' — para quem foi enviado.\n" +
+      "- 'subject:palavra' — no assunto.\n" +
+      "- 'filename:nome' — com um anexo com esse nome/extensão (ex: 'filename:relatorio.pdf').\n" +
+      "- 'has:attachment' — que tenha algum anexo.\n" +
+      "- 'after:AAAA/MM/DD' / 'before:AAAA/MM/DD' / 'newer_than:7d' — por data.\n" +
+      "Podes combinar vários (ex: 'from:joão filename:contrato has:attachment'). " +
+      "Se não houver conta Gmail ligada, a ferramenta devolve um erro — informa o utilizador para ligar a conta.",
+    input_schema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "A pesquisa traduzida para a sintaxe do Gmail, ex: 'filename:contrato.pdf from:joão'.",
+        },
+        limit: {
+          type: "number",
+          description: "Quantos emails devolver no máximo. Por omissão 10, máximo 25.",
+        },
+      },
+      required: ["query"],
+    },
+  },
 ];

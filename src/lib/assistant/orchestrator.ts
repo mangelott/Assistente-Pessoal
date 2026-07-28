@@ -5,12 +5,15 @@ import { ASSISTANT_TOOLS } from "./tools";
 import { runSearchCompaniesSkill } from "@/lib/skills/searchCompaniesSkill";
 import { runDraftEmailCampaignSkill } from "@/lib/skills/draftEmailCampaignSkill";
 import { runCreateGmailDraftsSkill } from "@/lib/skills/createGmailDraftsSkill";
+import { runSearchGmailSkill } from "@/lib/skills/searchGmailSkill";
 
 const SYSTEM_PROMPT = `
-És um assistente pessoal por voz, em português de Portugal, que ajuda o utilizador a automatizar duas tarefas:
+És um assistente pessoal por voz, em português de Portugal, que ajuda o utilizador a automatizar estas tarefas:
 1. Pesquisar empresas (ex: por setor/localização) e recolher contactos.
 2. Redigir emails em lote às empresas encontradas, e preparar rascunhos na conta Gmail do utilizador para
    revisão e envio manual — a aplicação nunca envia nada automaticamente.
+3. Pesquisar (só leitura) na caixa de correio Gmail do utilizador — encontrar emails sobre um tópico, de uma
+   pessoa, ou com um ficheiro anexado.
 
 Regras importantes:
 - Nunca uses "create_gmail_drafts" sem uma instrução explícita do utilizador nesta conversa para despachar os emails.
@@ -45,6 +48,11 @@ async function executeSkill(name: string, input: Record<string, unknown>): Promi
     case "create_gmail_drafts":
       return runCreateGmailDraftsSkill({
         campaignId: input.campaignId ? String(input.campaignId) : undefined,
+      });
+    case "search_gmail":
+      return runSearchGmailSkill({
+        query: String(input.query ?? ""),
+        limit: typeof input.limit === "number" ? input.limit : undefined,
       });
     default:
       return { error: `Ferramenta desconhecida: ${name}` };

@@ -99,6 +99,43 @@ export function GmailDraftsResultCard(props: {
   );
 }
 
+type GmailMessageResult = {
+  subject: string;
+  from: string;
+  date: string;
+  snippet: string;
+  link: string;
+};
+
+export function GmailSearchResultsCard(props: { totalFound: number; messages: GmailMessageResult[] }) {
+  if (props.totalFound === 0) {
+    return (
+      <div className="mt-2 rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-500">
+        Não encontrei nenhum email com esses critérios.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-2 rounded-lg border border-gray-200 bg-white p-3 text-sm">
+      <p className="mb-2 font-medium">{props.totalFound} emails encontrados</p>
+      <ul className="divide-y divide-gray-100">
+        {props.messages.map((m, i) => (
+          <li key={i} className="py-1.5">
+            <a href={m.link} target="_blank" rel="noopener noreferrer" className="font-medium underline">
+              {m.subject}
+            </a>
+            <p className="text-gray-500">
+              {m.from} · {m.date}
+            </p>
+            {m.snippet && <p className="mt-0.5 text-xs text-gray-400">{m.snippet}</p>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function ErrorCard(props: { error: string }) {
   return (
     <div className="mt-2 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-700">{props.error}</div>

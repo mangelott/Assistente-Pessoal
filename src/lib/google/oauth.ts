@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export const GMAIL_SCOPES = [
   "https://www.googleapis.com/auth/gmail.compose",
+  "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/userinfo.email",
 ];
 

@@ -2,7 +2,13 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { isSpeechRecognitionSupported, listenOnce, speak } from "@/lib/speech";
-import { CampaignPreviewCard, CompanyResultsCard, ErrorCard, GmailDraftsResultCard } from "./assistant-cards";
+import {
+  CampaignPreviewCard,
+  CompanyResultsCard,
+  ErrorCard,
+  GmailDraftsResultCard,
+  GmailSearchResultsCard,
+} from "./assistant-cards";
 
 type ChatMessage = {
   id: string;
@@ -187,6 +193,13 @@ export default function Home() {
                 failedCount={Number(m.data.failedCount ?? 0)}
                 totalRecipients={Number(m.data.totalRecipients ?? 0)}
                 gmailAccount={m.data.gmailAccount ? String(m.data.gmailAccount) : undefined}
+              />
+            )}
+
+            {m.toolName === "search_gmail" && m.data && !m.data.error && (
+              <GmailSearchResultsCard
+                totalFound={Number(m.data.totalFound ?? 0)}
+                messages={(m.data.messages as never[]) ?? []}
               />
             )}
 
