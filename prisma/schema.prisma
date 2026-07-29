@@ -23,10 +23,10 @@ enum CampaignStatus {
   DRAFTED_IN_GMAIL
 }
 
-/// Tokens OAuth da conta Gmail ligada, usados para criar rascunhos. Aplicação de utilizador único: uma só linha.
+/// Tokens OAuth de contas Gmail ligadas (podem ser várias em simultâneo), usados para rascunhos e pesquisa.
 model GoogleAccount {
   id           String   @id @default(cuid())
-  email        String
+  email        String   @unique
   accessToken  String
   refreshToken String
   expiryDate   DateTime

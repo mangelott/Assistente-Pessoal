@@ -1,21 +1,20 @@
 import { prisma } from "@/lib/prisma";
 import { createGmailDraft } from "@/lib/google/gmailDrafts";
-import { getConnectedGoogleAccountEmail } from "@/lib/google/oauth";
+import { resolveGmailAccount } from "@/lib/google/oauth";
 
 export type CreateGmailDraftsInput = {
   campaignId?: string;
+  accountEmail?: string;
 };
 
 const HARD_MAX_RECIPIENTS = 15;
 
-export async function runCreateGmailDraftsSkill({ campaignId }: CreateGmailDraftsInput) {
-  const connectedEmail = await getConnectedGoogleAccountEmail();
-  if (!connectedEmail) {
-    return {
-      error:
-        "Ainda não ligaste nenhuma conta Gmail. Liga uma conta na aplicação antes de pedires rascunhos no Gmail.",
-    };
+export async function runCreateGmailDraftsSkill({ campaignId, accountEmail }: CreateGmailDraftsInput) {
+  const account = await resolveGmailAccount(accountEmail);
+  if (!account.ok) {
+    return { error: account.error };
   }
+  const connectedEmail = account.email;
 
   const campaign = campaignId
     ? await prisma.emailCampaign.findUnique({
@@ -49,6 +48,7 @@ export async function runCreateGmailDraftsSkill({ campaignId }: CreateGmailDraft
   for (const recipient of recipients) {
     const personalizedBody = campaign.bodyTemplate.replaceAll("{{empresa}}", recipient.company.name);
     const result = await createGmailDraft({
+      accountEmail: connectedEmail,
       to: recipient.email,
       subject: campaign.subject,
       html: personalizedBody,

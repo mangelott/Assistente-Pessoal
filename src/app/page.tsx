@@ -40,7 +40,8 @@ export default function Home() {
   const [busy, setBusy] = useState(false);
   const [draftingGmailId, setDraftingGmailId] = useState<string | null>(null);
   const [textInput, setTextInput] = useState("");
-  const [googleAccount, setGoogleAccount] = useState<{ connected: boolean; email: string | null } | null>(null);
+  const [googleAccounts, setGoogleAccounts] = useState<{ id: string; email: string }[] | null>(null);
+  const [disconnectingId, setDisconnectingId] = useState<string | null>(null);
   const speechSupported = useSpeechSupported();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -48,11 +49,15 @@ export default function Home() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  useEffect(() => {
-    fetch("/api/auth/google/status")
+  function refreshGoogleAccounts() {
+    return fetch("/api/auth/google/accounts")
       .then((res) => res.json())
-      .then(setGoogleAccount)
-      .catch(() => setGoogleAccount({ connected: false, email: null }));
+      .then((data) => setGoogleAccounts(data.accounts ?? []))
+      .catch(() => setGoogleAccounts([]));
+  }
+
+  useEffect(() => {
+    refreshGoogleAccounts();
 
     const params = new URLSearchParams(window.location.search);
     const googleResult = params.get("google");
@@ -129,6 +134,19 @@ export default function Home() {
     }
   }
 
+  async function handleDisconnectAccount(id: string, email: string) {
+    setDisconnectingId(id);
+    try {
+      const res = await fetch(`/api/auth/google/accounts/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setGoogleAccounts((prev) => (prev ?? []).filter((a) => a.id !== id));
+        setMessages((prev) => [...prev, { id: uid(), role: "assistant", text: `Conta ${email} desligada.` }]);
+      }
+    } finally {
+      setDisconnectingId(null);
+    }
+  }
+
   function handleTextSubmit(e: React.FormEvent) {
     e.preventDefault();
     const text = textInput;
@@ -138,15 +156,31 @@ export default function Home() {
 
   return (
     <div className="flex flex-1 flex-col items-center px-4 py-6">
-      {googleAccount && (
-        <div className="mb-3 w-full max-w-lg rounded-md border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600 flex items-center justify-between">
-          {googleAccount.connected ? (
-            <span>Gmail ligado: {googleAccount.email}</span>
+      {googleAccounts && (
+        <div className="mb-3 w-full max-w-lg rounded-md border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
+          {googleAccounts.length === 0 ? (
+            <p>Nenhuma conta Gmail ligada — os rascunhos e a pesquisa no Gmail não vão funcionar.</p>
           ) : (
-            <span>Nenhuma conta Gmail ligada — os rascunhos no Gmail não vão funcionar.</span>
+            <ul className="space-y-1">
+              {googleAccounts.map((a) => (
+                <li key={a.id} className="flex items-center justify-between">
+                  <span>{a.email}</span>
+                  <button
+                    onClick={() => handleDisconnectAccount(a.id, a.email)}
+                    disabled={disconnectingId === a.id}
+                    className="ml-2 shrink-0 font-medium text-red-600 underline disabled:opacity-50"
+                  >
+                    {disconnectingId === a.id ? "A remover..." : "Remover"}
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
-          <a href="/api/auth/google/connect" className="ml-2 shrink-0 font-medium text-gray-900 underline">
-            {googleAccount.connected ? "Ligar outra conta" : "Ligar Gmail"}
+          <a
+            href="/api/auth/google/connect"
+            className="mt-1 inline-block font-medium text-gray-900 underline"
+          >
+            Ligar {googleAccounts.length > 0 ? "outra conta" : "Gmail"}
           </a>
         </div>
       )}

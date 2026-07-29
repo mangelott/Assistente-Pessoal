@@ -3,8 +3,10 @@
 Assistente pessoal por voz (PWA) que ajuda a automatizar estas tarefas:
 
 1. **Pesquisar empresas** (ex: "procura empresas de marketing em Lisboa") e recolher nome, telefone, email e website.
-2. **Redigir emails em lote** às empresas encontradas (ex: "escreve um email a apresentar os meus serviços"), e preparar um rascunho por destinatário na tua conta Gmail para reveres e enviares manualmente — a aplicação nunca envia nada sozinha, e há sempre um limite máximo de 15 destinatários por campanha.
+2. **Redigir emails em lote** às empresas encontradas (ex: "escreve um email a apresentar os meus serviços"), e preparar um rascunho por destinatário numa conta Gmail para reveres e enviares manualmente — a aplicação nunca envia nada sozinha, e há sempre um limite máximo de 15 destinatários por campanha.
 3. **Pesquisar na tua caixa de correio Gmail** (ex: "encontra o email onde o João me mandou o contrato") — só leitura, nunca apaga nem altera nada.
+
+Podes ligar **várias contas Gmail em simultâneo** (ex: pessoal + trabalho) e removê-las a qualquer momento na interface. Sem indicares uma conta específica, a pesquisa de emails procura em todas as ligadas; a criação de rascunhos pede-te para escolheres qual usar se houver mais do que uma.
 
 Funciona como PWA — instalável no telemóvel (Android/iOS) ou no computador, com comandos por voz (Web Speech API) para usar em mãos-livres, por exemplo a conduzir.
 
@@ -32,8 +34,8 @@ Skills atuais:
 
 - `search_companies` — pesquisa empresas e grava-as numa `SearchSession` (`src/lib/skills/searchCompaniesSkill.ts`)
 - `draft_email_campaign` — redige assunto+corpo do email e cria uma `EmailCampaign` pendente de confirmação, limitada a 15 destinatários com email disponível e ainda não contactados (`src/lib/skills/draftEmailCampaignSkill.ts`)
-- `create_gmail_drafts` — cria um rascunho por destinatário na conta Gmail ligada, sem enviar nada, para revisão manual (`src/lib/skills/createGmailDraftsSkill.ts`)
-- `search_gmail` — pesquisa (só leitura) na caixa de correio Gmail ligada, usando a sintaxe de pesquisa do Gmail (`src/lib/skills/searchGmailSkill.ts`)
+- `create_gmail_drafts` — cria um rascunho por destinatário numa conta Gmail ligada, sem enviar nada, para revisão manual (`src/lib/skills/createGmailDraftsSkill.ts`)
+- `search_gmail` — pesquisa (só leitura) numa conta Gmail ligada, ou em todas se não for indicada nenhuma, usando a sintaxe de pesquisa do Gmail (`src/lib/skills/searchGmailSkill.ts`)
 
 Novas skills podem ser adicionadas registando-as em `src/lib/assistant/tools.ts` e `src/lib/assistant/orchestrator.ts`.
 

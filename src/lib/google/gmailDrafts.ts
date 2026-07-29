@@ -27,16 +27,17 @@ function buildMimeMessage({ to, subject, html }: { to: string; subject: string; 
 
 export type CreateGmailDraftResult = { ok: true } | { ok: false; error: string };
 
-/** Cria um rascunho na conta Gmail ligada. Não envia nada — fica pendente de revisão manual no Gmail. */
+/** Cria um rascunho numa conta Gmail ligada específica. Não envia nada — fica pendente de revisão manual no Gmail. */
 export async function createGmailDraft(params: {
+  accountEmail: string;
   to: string;
   subject: string;
   html: string;
 }): Promise<CreateGmailDraftResult> {
   try {
-    const gmail = await getAuthorizedGmailClient();
+    const gmail = await getAuthorizedGmailClient(params.accountEmail);
     if (!gmail) {
-      return { ok: false, error: "Nenhuma conta Gmail ligada." };
+      return { ok: false, error: `A conta ${params.accountEmail} não está ligada.` };
     }
 
     const raw = buildMimeMessage(params);

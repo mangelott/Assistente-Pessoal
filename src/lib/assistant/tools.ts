@@ -52,11 +52,13 @@ export const ASSISTANT_TOOLS: Anthropic.Tool[] = [
   {
     name: "create_gmail_drafts",
     description:
-      "Prepara um rascunho por destinatário na conta Gmail ligada do utilizador, para uma campanha já redigida " +
+      "Prepara um rascunho por destinatário numa conta Gmail ligada do utilizador, para uma campanha já redigida " +
       "e pendente. NÃO envia nada — os rascunhos ficam no Gmail à espera que o utilizador os reveja e envie " +
       "manualmente. Usa esta ferramenta sempre que o utilizador pedir para enviar/despachar os emails de uma " +
-      "campanha — é a única forma de despachar emails nesta aplicação. Se não houver conta Gmail ligada, " +
-      "a ferramenta devolve um erro a explicar isso — informa o utilizador para ligar a conta na aplicação.",
+      "campanha — é a única forma de despachar emails nesta aplicação. " +
+      "Se houver mais do que uma conta Gmail ligada e não indicares 'accountEmail', a ferramenta devolve um erro " +
+      "a listar as contas disponíveis — pergunta ao utilizador qual quer usar e volta a chamar com essa conta. " +
+      "Se não houver nenhuma conta ligada, informa o utilizador para ligar uma na aplicação.",
     input_schema: {
       type: "object",
       properties: {
@@ -64,13 +66,18 @@ export const ASSISTANT_TOOLS: Anthropic.Tool[] = [
           type: "string",
           description: "ID da campanha. Se omitido, usa a campanha pendente mais recente.",
         },
+        accountEmail: {
+          type: "string",
+          description: "Email da conta Gmail ligada a usar para criar os rascunhos. Obrigatório se houver mais do que uma conta ligada.",
+        },
       },
     },
   },
   {
     name: "search_gmail",
     description:
-      "Pesquisa emails na conta Gmail ligada do utilizador (só leitura — nunca abre, apaga nem altera nada). " +
+      "Pesquisa emails numa (ou em todas, se não especificares) conta(s) Gmail ligada(s) do utilizador " +
+      "(só leitura — nunca abre, apaga nem altera nada). " +
       "Usa esta ferramenta quando o utilizador pedir para encontrar/procurar um email sobre um tópico, de uma " +
       "pessoa, com um ficheiro anexado, etc. Traduz o pedido para a sintaxe de pesquisa do Gmail no campo 'query':\n" +
       "- Palavras-chave simples pesquisam o assunto e corpo do email.\n" +
@@ -81,6 +88,8 @@ export const ASSISTANT_TOOLS: Anthropic.Tool[] = [
       "- 'has:attachment' — que tenha algum anexo.\n" +
       "- 'after:AAAA/MM/DD' / 'before:AAAA/MM/DD' / 'newer_than:7d' — por data.\n" +
       "Podes combinar vários (ex: 'from:joão filename:contrato has:attachment'). " +
+      "Se o utilizador não indicar uma conta específica e houver várias ligadas, pesquisa em todas automaticamente " +
+      "(não precisas de perguntar, ao contrário do 'create_gmail_drafts'). " +
       "Se não houver conta Gmail ligada, a ferramenta devolve um erro — informa o utilizador para ligar a conta.",
     input_schema: {
       type: "object",
@@ -92,6 +101,10 @@ export const ASSISTANT_TOOLS: Anthropic.Tool[] = [
         limit: {
           type: "number",
           description: "Quantos emails devolver no máximo. Por omissão 10, máximo 25.",
+        },
+        accountEmail: {
+          type: "string",
+          description: "Email de uma conta Gmail ligada específica, se o utilizador quiser restringir a pesquisa só a essa.",
         },
       },
       required: ["query"],

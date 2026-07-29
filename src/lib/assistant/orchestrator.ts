@@ -48,11 +48,13 @@ async function executeSkill(name: string, input: Record<string, unknown>): Promi
     case "create_gmail_drafts":
       return runCreateGmailDraftsSkill({
         campaignId: input.campaignId ? String(input.campaignId) : undefined,
+        accountEmail: input.accountEmail ? String(input.accountEmail) : undefined,
       });
     case "search_gmail":
       return runSearchGmailSkill({
         query: String(input.query ?? ""),
         limit: typeof input.limit === "number" ? input.limit : undefined,
+        accountEmail: input.accountEmail ? String(input.accountEmail) : undefined,
       });
     default:
       return { error: `Ferramenta desconhecida: ${name}` };

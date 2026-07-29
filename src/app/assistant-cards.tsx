@@ -105,6 +105,7 @@ type GmailMessageResult = {
   date: string;
   snippet: string;
   link: string;
+  account?: string;
 };
 
 export function GmailSearchResultsCard(props: { totalFound: number; messages: GmailMessageResult[] }) {
@@ -127,6 +128,7 @@ export function GmailSearchResultsCard(props: { totalFound: number; messages: Gm
             </a>
             <p className="text-gray-500">
               {m.from} · {m.date}
+              {m.account ? ` · ${m.account}` : ""}
             </p>
             {m.snippet && <p className="mt-0.5 text-xs text-gray-400">{m.snippet}</p>}
           </li>

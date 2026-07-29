@@ -8,17 +8,22 @@ export type GmailSearchResult = {
   date: string;
   snippet: string;
   link: string;
+  account: string;
 };
 
 function getHeader(headers: { name?: string | null; value?: string | null }[] | undefined, name: string) {
   return headers?.find((h) => h.name?.toLowerCase() === name.toLowerCase())?.value ?? "";
 }
 
-/** Pesquisa mensagens no Gmail usando a mesma sintaxe da barra de pesquisa do Gmail (from:, filename:, has:attachment, etc.). */
-export async function searchGmailMessages(query: string, maxResults = 10): Promise<GmailSearchResult[]> {
-  const gmail = await getAuthorizedGmailClient();
+/** Pesquisa mensagens numa conta Gmail específica, usando a mesma sintaxe da barra de pesquisa do Gmail (from:, filename:, has:attachment, etc.). */
+export async function searchGmailMessages(
+  accountEmail: string,
+  query: string,
+  maxResults = 10,
+): Promise<GmailSearchResult[]> {
+  const gmail = await getAuthorizedGmailClient(accountEmail);
   if (!gmail) {
-    throw new Error("Nenhuma conta Gmail ligada.");
+    throw new Error(`A conta ${accountEmail} não está ligada.`);
   }
 
   const listRes = await gmail.users.messages.list({
@@ -47,6 +52,7 @@ export async function searchGmailMessages(query: string, maxResults = 10): Promi
       date: getHeader(msg.data.payload?.headers, "Date"),
       snippet: msg.data.snippet ?? "",
       link: `https://mail.google.com/mail/u/0/#all/${id}`,
+      account: accountEmail,
     });
   }
 
