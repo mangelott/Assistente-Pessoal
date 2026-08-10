@@ -9,7 +9,14 @@ export const ASSISTANT_TOOLS: Anthropic.Tool[] = [
       "Usa esta ferramenta sempre que o utilizador pedir para procurar, encontrar ou pesquisar empresas. " +
       "Se o utilizador mencionar uma região vaga do país (ex: 'zona centro', 'norte'), tenta traduzi-la em 2-3 " +
       "cidades concretas dessa região na própria query (ex: 'Coimbra, Viseu e Leiria' em vez de 'zona centro'), " +
-      "porque o motor de pesquisa funciona muito melhor com localizações concretas do que com regiões amplas.",
+      "porque o motor de pesquisa funciona muito melhor com localizações concretas do que com regiões amplas. " +
+      "IMPORTANTE: o motor de pesquisa (Google Places) só corresponde texto a negócios reais (nome, categoria, " +
+      "tipo) — não percebe critérios abstratos como 'que possam ter interesse em X', 'que precisem de Y' ou " +
+      "'públicos-alvo de determinado produto'. Se o utilizador pedir isso, NÃO metas esse critério na query — " +
+      "traduz para o tipo de empresa concreto que normalmente corresponde a esse público (ex: para 'empresas " +
+      "interessadas em usar o OutSystems' usa algo como 'empresas de desenvolvimento de software' ou " +
+      "'consultoras de transformação digital'), e deixa o critério abstrato para a fase de redigir o email, " +
+      "onde é que faz sentido argumentar o porquê.",
     input_schema: {
       type: "object",
       properties: {

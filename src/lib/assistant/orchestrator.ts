@@ -87,6 +87,9 @@ export async function runAssistantTurn(userText: string): Promise<AssistantTurnR
     max_tokens: 1024,
     system: SYSTEM_PROMPT,
     tools: ASSISTANT_TOOLS,
+    // as nossas skills dependem umas das outras em sequência (ex: pesquisar antes de redigir), por isso o
+    // Claude nunca deve chamar mais do que uma de cada vez — o resto do código só sabe resolver uma.
+    tool_choice: { type: "auto", disable_parallel_tool_use: true },
     messages,
   });
 
